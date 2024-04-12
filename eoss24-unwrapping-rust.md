@@ -24,7 +24,7 @@
 
 <!-- .slide: data-auto-animate -->
 
-```rust [1-2| 4-6]
+```rust [1-3| 4-6]
 //! memfaultd
 //! A Linux agent to capture system metrics, report crashes and
 //! install updates over the air..
@@ -35,7 +35,7 @@ fn main() {
 ```
 <!-- .element: data-id="1" -->
 
----
+--
 
 <!-- .slide: data-auto-animate -->
 
@@ -62,10 +62,13 @@ fn try_adopt_rust() ->
 
 <!-- .slide: data-background-color="#fff" -->
 
-<div style="display: flex;">
-<img src="img/thomas.jpg" style="width: 30%; margin-right: 50px;" />
+<div style="display: flex; margin: 20px;">
+<div style="display: flex; flex-shrink:2; flex-direction:column;margin-right: 50px;">
+<img src="img/thomas.jpg" style="" />
+<img src="img/memfault-logo.svg" style="" />
+</div>
 
-<pre><code data-line-numbers="1-5|6-12|14-20">> rustup show
+<pre style="align-self: center;"><code data-line-numbers="1-5|6-12|14-20">> rustup show
 
 Your host: Thomas Sarlandie - @sarfata
 Job title: Field CTO @Memfault
@@ -94,6 +97,10 @@ help embedded companies ship better firmware
 
 ---
 
+# Will it run?
+
+--
+
 Will Rust run on all the platforms I need to support?
 
 ``` [1-2|4-5]
@@ -107,7 +114,7 @@ $ rustc --print target-list |grep -i linux |wc -l
 
 ✅ <!-- .element: class="fragment" -->
 
----
+--
 
 <!-- .slide: data-auto-animate -->
 
@@ -120,7 +127,7 @@ $ cargo build --target=armv7-unknown-linux-gnueabihf
 ```
 🐳 <!-- .element: class="fragment" -->
 
----
+--
 
 <!-- .slide: data-auto-animate -->
 
@@ -138,9 +145,7 @@ $ cross build --target armv7-unknown-linux-gnueabihf
 
 <!-- .slide: data-background-color="#ddd" -->
 
-### Packaging Rust for embedded Linux
-
-![Yocto logo](img/Yocto_Project_logo.svg)
+<div style="display: flex; align-items: center; gap: 30px; justify-content: center;">🦀 <span>+</span> <img alt="yocto" src="img/Yocto_Project_logo.svg"/>
 
 --
 
@@ -149,7 +154,7 @@ $ cross build --target armv7-unknown-linux-gnueabihf
 - meta-rust
   - Started by Cody Shafer in 2014
   - Merged by Randy MacLeod in Yocto 3.4 Honister
-  - Provides a `class` to build rust crates
+  - Provides a `cargo` class to build rust crates
   - Builds the rust compiler from source
   - Requires explicit dependency list (via `cargo-bitbake`)
   - `meta-rust/meta-rust` remains available for a more recent version
@@ -197,10 +202,11 @@ Rust on Yocto? ✅ <!-- .element: class="fragment" -->
 
 ## Adoption Strategy
 
-rusting the C code - one file at a time
+rusting the C code - one file at a time <!-- .element: class="fragment" -->
 
 --
 
+`mylib.c`
 ```c
 extern "C" void do_something();
 
@@ -211,6 +217,7 @@ void main_loop() {
 }
 ```
 
+`main.rs` <!-- .element class="fragment" data-fragment-index="1"-->
 ```rust
 extern "C" fn main_loop();
 
@@ -222,12 +229,45 @@ extern "C" fn do_something() {
     // Do something
 }
 ```
+<!-- .element class="fragment" data-fragment-index="1"-->
+
+--
+
+`build.rs`
+```rust
+// Example custom build script.
+fn main() {
+  // Tell Cargo that if the given file changes, to rerun this build script.
+  println!("cargo::rerun-if-changed=src/hello.c");
+  // Use the `cc` crate to build a C file and statically link it.
+  cc::Build::new()
+    .file("src/hello.c")
+    .compile("hello");
+}
+
+
+```
+
+<span>For more complicated libraries – see the `cmake` crate.</span> <!-- .element: class="fragment" -->
 
 ---
 
-### Learning Some Rust
+<!-- .slide: data-auto-animate -->
+# Learning Some Rust <!-- data-id="title" -->
 
-![rust books](img/rust-books.png) <!-- .element: style="width: 60%;" -->
+--
+
+<!-- .slide: data-auto-animate -->
+### Learning Some Rust<!-- data-id="title" -->
+
+![rust books](img/rust-books.png) <!-- .element: style="width: 90%;" -->
+
+--
+
+<!-- .slide: data-auto-animate -->
+### Learning Some Rust<!-- data-id="title" -->
+
+![rust books](img/rust-books.png)<!-- .element: style="width: 50%;" -->
 
 - [The Rust Programming Language book](https://doc.rust-lang.org/book/)
 - [doc.rust-lang.org/std](https://doc.rust-lang.org/std) => `Vec`, `String`, `PathBuf`, `Option`, `Result`, etc.
@@ -236,11 +276,45 @@ extern "C" fn do_something() {
 
 ---
 
-# 📚
-
-Lessons learnt ...
+# 📚 Lessons learnt ...
 
 ---
+
+<!-- .slide: data-background-color="pink" -->
+
+# ❤️‍🩹 the Borrow Checker
+
+--
+``` [1-12|13-16|19-30]
+error[E0382]: borrow of moved value: `paths`
+   --> src/main.rs:8:34
+    |
+4   |     let paths: Vec<PathBuf> = vec![];
+    |         ----- move occurs because `paths` has type `Vec<PathBuf>`,
+                    which does not implement the `Copy` trait
+5   |
+6   |     paths.into_iter().map(|p| File::create(p));
+    |           ----------- `paths` moved due to this method call
+7   |
+8   |     println!("Created {} files", paths.len());
+    |                                  ^^^^^^^^^^^ value borrowed here after move
+    |
+note: `into_iter` takes ownership of the receiver `self`, which moves `paths`
+   --> /.../src/rust/library/core/src/iter/traits/collect.rs:271:18
+    |
+271 |     fn into_iter(self) -> Self::IntoIter;
+    |                  ^^^^
+help: you can `clone` the value and consume it, but this might not be your
+desired behavior
+    |
+6   |     paths.clone().into_iter().map(|p| File::create(p));
+    |           ++++++++
+```
+<!-- .element: style="font-size:0.5em; width: 98%; margin: 0;" -->
+
+Take your time - Read the error message <!-- .element: class="fragment" -->
+
+--
 
 _beginner_ Rust
 
@@ -285,85 +359,10 @@ impl NetworkClientImpl {
 ```
 <!-- .element: data-id="1" -->
 
-<p>👩‍🏫 Don't waste complex keystrokes for a few bytes of memory!</p> <!-- .element: class="fragment" -->
-
----
-
-<!-- .slide: data-background-color="pink" -->
-
-# ❤️‍🩹 the Borrow Checker
-
---
-
-```rust
-fn main() {
-    let paths: Vec<PathBuf> = vec![];
-
-    paths.into_iter().map(|p| File::create(p));
-
-    println!("Created {} files", paths.len());
-}
-```
+<p>👩‍🏫 Avoid early optimization - Value simplicity</p> <!-- .element: class="fragment" -->
 
 
 --
-
-``` [1-12|13-16|19-30]
-error[E0382]: borrow of moved value: `paths`
-   --> src/main.rs:8:34
-    |
-4   |     let paths: Vec<PathBuf> = vec![];
-    |         ----- move occurs because `paths` has type `Vec<PathBuf>`,
-                    which does not implement the `Copy` trait
-5   |
-6   |     paths.into_iter().map(|p| File::create(p));
-    |           ----------- `paths` moved due to this method call
-7   |
-8   |     println!("Created {} files", paths.len());
-    |                                  ^^^^^^^^^^^ value borrowed here after move
-    |
-note: `into_iter` takes ownership of the receiver `self`, which moves `paths`
-   --> /.../src/rust/library/core/src/iter/traits/collect.rs:271:18
-    |
-271 |     fn into_iter(self) -> Self::IntoIter;
-    |                  ^^^^
-help: you can `clone` the value and consume it, but this might not be your desired behavior
-    |
-6   |     paths.clone().into_iter().map(|p| File::create(p));
-    |           ++++++++
-```
-<!-- .element: style="font-size: 0.4em; height: 100%;" -->
-
---
-
-<!-- .slide: data-auto-animate-->
-
-```rust
-fn main() {
-    let paths: Vec<PathBuf> = vec![];
-
-    paths.into_iter().map(|p| File::create(p));
-
-    println!("Created {} files", paths.len());
-}
-```
-<!-- .element: data-id=1 -->
-
---
-<!-- .slide: data-auto-animate-->
-
-```rust [4]
-fn main() {
-    let paths: Vec<PathBuf> = vec![];
-
-    paths.iter().map(|p| File::create(p));
-
-    println!("Created {} files", paths.len());
-}
-```
-<!-- .element: data-id=1 -->
-
----
 
 <!-- .slide: data-background-color="red" -->
 
@@ -435,23 +434,10 @@ thread 'main' panicked at 'index out of bounds:
 
 - The borrow checker does not protect you from deadlocks
 
----
-
-# 🧑‍🎨 Coding Style
-
-- Tests
-  - We like rstest for fixture and `#[case(…)]`
-- Module structure and export management
-- Error management
-  - DIY, anyhow or eyre
-  - Wrapping errors when bubbling up
-  - Only print where the error is dismissed
-- Logging
-  - The log crate offers a simple façade for multiple loggers
-  - Agree on what each level means
-  - Which error formatter will you use?  `{} {:?} {:#}`
 
 ---
+
+<!-- .slide: data-background-color="#012D25" -->
 
 # `optimize()`
 
@@ -601,6 +587,8 @@ $ ls -al main target/release/helloworld
 
 ---
 
+<!-- .slide: data-background-color="#012D25" -->
+
 # `optimize() // more`
 
 --
@@ -642,10 +630,13 @@ $ cargo build --release --features=openssl-tls
 
 ---
 <!-- .slide data-auto-animate -->
+<!-- .slide: data-background-color="#012D25" -->
 
 # 🎂 18 months in
 
----
+--
+
+<!-- .slide: data-background-color="#ddd" -->
 
 <!-- .slide data-auto-animate -->
 
@@ -656,10 +647,12 @@ Our code reviews are so much more interesting
 You will never read&write C code the same way
 
 
----
+--
 
 <!-- .slide: data-background-color="#012D25" style="height: 100%;" -->
 
 <img src="img/mosaic.png" style="position: absolute; right: 0; bottom: 0;">
 
-![embedded linux conference](img/embedded-linux-conference.svg) <!-- .element: class="r-stretch" style="width: 600px;" -->
+<div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%;">
+<img alt="embedded linux conference" src="img/embedded-linux-conference.svg" class="r-stretch" style="width: 600px;" />
+</div>
