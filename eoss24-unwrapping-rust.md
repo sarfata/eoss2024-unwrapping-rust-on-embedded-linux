@@ -443,7 +443,6 @@ thread 'main' panicked at 'index out of bounds:
 
 --
 
-don't panic!
 
 ```shell
 $ cargo init
@@ -456,7 +455,8 @@ $ du -sh target/release/helloworld
 4.4M    target/release/helloworld
 ```
 
-# 🤬 <!-- .element: class="fragment" -->
+# 🤬  <!-- .element: class="fragment" -->
+don't panic!  <!-- .element: class="fragment" -->
 
 --
 
@@ -574,15 +574,23 @@ $ ls -al main target/release/helloworld
 
 --
 
+<!-- .slide: data-animate-auto -->
+
 # 🗜️ Take aways
 
-- Rust’s std is about 260 kB
+- Rust’s `std` is about 260 kB
 - It’s statically linked in each rust binary
 
+--
+<!-- .slide: data-animate-auto -->
+
 - You can …
-  - Do without std
-  - Compile it from source – Enables better dead-code removal and optimizing for size
-  - Use a busybox approach to avoid multiplying copies of rust::std on disk
+  - Do without `std`
+  - Keep chiseling
+    - Compile `std` from source – Enables better dead-code removal and optimizing for size
+    - 🙏 [johnthagen/min-sized-rust](https://github.com/johnthagen/min-sized-rust)
+  - Embrace `std`
+    - Use a busybox approach to avoid multiplying copies of Rust's `std` on disk
 
 
 ---
