@@ -657,6 +657,16 @@ You will never read&write C code the same way
 
 --
 
+## Post-talk notes
+
+Someone asked: why are you not using a shared library for libstd-rs and for our shared code (instead of busybox).
+
+- The answer is that [currently `meta-rust-bin` does not support shipping `libstd-rs` as a shared library](https://github.com/rust-embedded/meta-rust-bin?tab=readme-ov-file#features).
+- AFAIK `meta-rust` does not support it either.
+- This would be a great contribution!
+
+--
+
 <!-- .slide: data-background-color="#012D25" style="height: 100%;" -->
 
 <img src="img/mosaic.png" style="position: absolute; right: 0; bottom: 0;">
