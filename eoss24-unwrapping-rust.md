@@ -16,6 +16,7 @@
     <img src="img/linux-foundation.svg"  style="max-width: 10%;">
     <small>#EmbeddedOSSummit</small>
     <small>@sarfata</small>
+    <small><a href="https://github.com/sarfata/eoss2024-unwrapping-rust-on-embedded-linux/blob/gh-pages/eoss24-unwrapping-rust.md">Slides source code</a></small>
 </div>
 
 </div>
